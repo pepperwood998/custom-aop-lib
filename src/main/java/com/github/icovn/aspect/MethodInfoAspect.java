@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -36,36 +35,38 @@ public class MethodInfoAspect {
         }
     }
 
-    @Before("execution(* com.github.icovn.aop..*(..))")
-    public void logInput(JoinPoint joinPoint) {
+    @Around("execution(* com.github.icovn.aop..*(..))")
+    public Object logDuration(ProceedingJoinPoint joinPoint) throws Throwable {
+        
+        String methodFullname = joinPoint.getSignature().toString();
 
+        long start = System.currentTimeMillis();
+        Object proceed = joinPoint.proceed();
+        long duration = System.currentTimeMillis() - start;
+        Log.info("{");
+        Log.info(String.format("  \"name\": %s", methodFullname));
+        Log.info("  \"arguments\": [");
+        
         CodeSignature codeSignature = (CodeSignature) joinPoint.getSignature();
         String[] paramNames = codeSignature.getParameterNames();
         Object[] methodArgs = joinPoint.getArgs();
         for (int i = 0; i < methodArgs.length; i++) {
             Object arg = methodArgs[i];
-            Log.info("Argument", String.format("#%s:", (i + 1)), 
-                    arg.getClass().getSimpleName(), "-", 
-                    paramNames[i], "-", 
-                    arg.toString());
+            Log.info("  {");
+            Log.info(String.format("      \"name\": %s,", paramNames[i]));
+            Log.info(String.format("      \"type\": %s,", arg.getClass().getSimpleName()));
+            Log.info(String.format("      \"value\": %s", arg.toString()));
+            if (i < methodArgs.length - 1)
+                Log.info("  },");
+            else
+                Log.info("  }");
         }
-    }
+        Log.info("  ]");
+        Log.info(String.format("  \"duration\": %dms", duration));
+        Log.info(String.format("  \"output\": %s", proceed.toString()));
+        Log.info("}");
 
-    @Around("execution(* com.github.icovn.aop..*(..))")
-    public Object logDuration(ProceedingJoinPoint joinPoint) throws Throwable {
-
-        long start = System.currentTimeMillis();
-        Object proceed = joinPoint.proceed();
-        long duration = System.currentTimeMillis() - start;
-
-        Log.info(joinPoint.getSignature().toString(), "duration", String.valueOf(duration), "ms");
         return proceed;
-    }
-
-    @AfterReturning(pointcut = "execution(* com.github.icovn.aop..*(..))", returning = "retVal")
-    public void logOutput(JoinPoint joinPoint, Object retVal) {
-
-        Log.info("Output:", retVal.getClass().getSimpleName(), "-", retVal.toString());
     }
 
     private class NoLoginException extends Exception {
