@@ -51,7 +51,7 @@ public class MethodInfoAspect {
         }
     }
 
-    @Around("execution(* com.github.icovn.aop..*.*(..))")
+    @Around("execution(* com.github.icovn.aop..*(..))")
     public Object logDuration(ProceedingJoinPoint joinPoint) throws Throwable {
 
         long start = System.currentTimeMillis();
