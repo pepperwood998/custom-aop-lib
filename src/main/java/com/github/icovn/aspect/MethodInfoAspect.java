@@ -17,20 +17,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class MethodInfoAspect {
 
-    private static final String PASSWORD_IS_NOT_CORRECT = "Password is not correct";
+    private static final String MSG_PROMPT_AUTHEN = "Enter password: ";
+    private static final String MSG_INPUT_FAIL = "Error while getting password";
+    private static final String MSG_AUTHEN_FAILED = "Password is not correct";
     private static final String AUTHEN_CODE = "123";
 
     @Before("execution(* com.github.icovn.aop..*(..))")
     public void restrict(JoinPoint joinPoint) throws NoLoginException {
-        Log.info("Enter password: ");
+        Log.info(MSG_PROMPT_AUTHEN);
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
             if (!AUTHEN_CODE.equals(reader.readLine())) {
-                throw new NoLoginException(PASSWORD_IS_NOT_CORRECT);
+                throw new NoLoginException(MSG_AUTHEN_FAILED);
             }
         } catch (IOException e) {
             Log.err(e);
-            throw new NoLoginException("Error while getting password");
+            throw new NoLoginException(MSG_INPUT_FAIL);
         }
     }
 
